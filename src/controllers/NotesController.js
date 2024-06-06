@@ -30,12 +30,14 @@ class NotesController {
       const { id } = request.params;
 
       const note = await knex("notes").where({ id }).first();
+      const tags = await knex("tags").where({ note_id: id }).orderBy("name");
+
 
       if (!note) {
         return response.status(404).json({ error: 'Note not found' });
       }
 
-      return response.json(note);
+      return response.json({...note, tags});
     } catch (error) {
       response.status(500).json({ error: error.message });
     }
@@ -73,6 +75,7 @@ class NotesController {
         .whereLike("notes.title", `%${title}%`)
         .whereIn("name", filterTags)
         .innerJoin("notes", "notes.id", "tags.note_id")
+        .groupBy("notes.id")
         .orderBy("notes.title")
 
     } else {
